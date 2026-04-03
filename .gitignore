@@ -1,5 +1,8 @@
 node_modules
 .DS_Store
+*.db
+*.db-wal
+*.db-shm
 dist
 dist-ssr
 *.local
@@ -11,3 +14,4 @@ dist-ssr
 .vinxi
 __unconfig*
 todos.json
+.claude
