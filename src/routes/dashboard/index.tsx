@@ -1,14 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SportTab } from "#/components/sport-tab";
+import { useSportContext } from "../dashboard";
 
 export const Route = createFileRoute("/dashboard/")({
   component: DashboardIndex,
 });
 
 function DashboardIndex() {
-  // Phase 9 will replace this with <SportTab /> components
-  return (
-    <div className="p-4 text-[var(--muted-foreground)]">
-      Loading sport data…
-    </div>
-  );
+  const { activeSport } = useSportContext();
+  return <SportTab sport={activeSport} />;
 }
