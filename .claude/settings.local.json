@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create:*)",
+      "Bash(mv sportraydar/sports-pwa-plan.md /tmp/sports-pwa-plan-nested.md)",
+      "Bash(cp sports-pwa-plan.md /tmp/sports-pwa-plan-root.md)",
+      "Bash(rsync -a sportraydar/ . --exclude='sports-pwa-plan.md')"
+    ]
+  }
+}
