@@ -21,13 +21,13 @@ interface SportContextValue {
   setActiveSport: (sport: Sport) => void;
 }
 
-const SportContext = createContext<SportContextValue | null>(null);
+const SportContext = createContext<SportContextValue>({
+  activeSport: "football",
+  setActiveSport: () => {},
+});
 
 export function useSportContext(): SportContextValue {
-  const ctx = useContext(SportContext);
-  if (!ctx)
-    throw new Error("useSportContext must be used within dashboard layout");
-  return ctx;
+  return useContext(SportContext);
 }
 
 // ── Route ────────────────────────────────────────────────────────────────────

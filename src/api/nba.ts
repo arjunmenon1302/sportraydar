@@ -2,9 +2,9 @@ import type { Match, Standing } from "./types";
 
 const BASE_URL = "https://api.balldontlie.io/v1";
 
-function authHeaders(): HeadersInit {
+function authHeaders(): HeadersInit | null {
   const key = process.env["VITE_NBA_API_KEY"];
-  if (!key) throw new Error("VITE_NBA_API_KEY is not configured");
+  if (!key) return null;
   return { Authorization: key };
 }
 
@@ -57,10 +57,10 @@ function normaliseMatch(raw: Record<string, unknown>): Match {
 }
 
 export async function getTodaysMatches(): Promise<Match[]> {
+  const headers = authHeaders();
+  if (!headers) return [];
   const date = today();
-  const res = await fetch(`${BASE_URL}/games?dates[]=${date}`, {
-    headers: authHeaders(),
-  });
+  const res = await fetch(`${BASE_URL}/games?dates[]=${date}`, { headers });
 
   if (res.status === 429) return [];
 
@@ -78,9 +78,9 @@ export async function getTodaysMatches(): Promise<Match[]> {
 }
 
 export async function getMatchDetail(id: string): Promise<Match> {
-  const res = await fetch(`${BASE_URL}/games/${id}`, {
-    headers: authHeaders(),
-  });
+  const headers = authHeaders();
+  if (!headers) throw new Error("VITE_NBA_API_KEY is not configured");
+  const res = await fetch(`${BASE_URL}/games/${id}`, { headers });
 
   if (res.status === 429) {
     throw new Error("Rate limited — try again shortly");
@@ -99,9 +99,11 @@ export async function getMatchDetail(id: string): Promise<Match> {
 }
 
 export async function getStandings(): Promise<Standing[]> {
+  const headers = authHeaders();
+  if (!headers) return [];
   // TODO: balldontlie v1 free tier may not have a dedicated standings endpoint
   // Falling back to team list — standings would need to be computed from season records
-  const res = await fetch(`${BASE_URL}/teams`, { headers: authHeaders() });
+  const res = await fetch(`${BASE_URL}/teams`, { headers });
 
   if (res.status === 429) return [];
 
@@ -126,28 +128,33 @@ export async function getStandings(): Promise<Standing[]> {
   }));
 }
 
+// Uses TheSportsDB free search — no API key required, covers NBA teams
 export async function searchTeams(
   query: string,
 ): Promise<Array<{ id: string; name: string; crest?: string }>> {
   const res = await fetch(
-    `${BASE_URL}/teams?search=${encodeURIComponent(query)}`,
-    { headers: authHeaders() },
+    `https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(query)}`,
   );
 
-  if (res.status === 429) return [];
-
-  if (!res.ok) {
-    throw new Error(`Failed to search NBA teams: ${res.statusText}`);
-  }
+  if (!res.ok) return [];
 
   const json = (await res.json()) as Record<string, unknown>;
-  const teams = Array.isArray(json["data"])
-    ? (json["data"] as Record<string, unknown>[])
+  const teams = Array.isArray(json["teams"])
+    ? (json["teams"] as Record<string, unknown>[])
     : [];
 
-  return teams.map((t) => ({
-    id: String(t["id"]),
-    name: String(t["full_name"] ?? t["name"] ?? ""),
-    crest: undefined,
-  }));
+  // Filter to basketball teams only
+  return teams
+    .filter((t) => {
+      const sport = String(t["strSport"] ?? "").toLowerCase();
+      return sport === "basketball";
+    })
+    .map((t) => ({
+      id: String(t["idTeam"]),
+      name: String(t["strTeam"]),
+      crest:
+        typeof t["strBadge"] === "string" && t["strBadge"]
+          ? String(t["strBadge"])
+          : undefined,
+    }));
 }

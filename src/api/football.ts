@@ -2,9 +2,9 @@ import type { Match, MatchEvent, Standing } from "./types";
 
 const BASE_URL = "https://api.football-data.org/v4";
 
-function authHeaders(): HeadersInit {
+function authHeaders(): HeadersInit | null {
   const key = process.env["VITE_FOOTBALL_API_KEY"];
-  if (!key) throw new Error("VITE_FOOTBALL_API_KEY is not configured");
+  if (!key) return null;
   return { "X-Auth-Token": key };
 }
 
@@ -81,10 +81,12 @@ function normaliseMatch(
 }
 
 export async function getTodaysMatches(): Promise<Match[]> {
+  const headers = authHeaders();
+  if (!headers) return [];
   const date = today();
   const res = await fetch(
     `${BASE_URL}/matches?dateFrom=${date}&dateTo=${date}`,
-    { headers: authHeaders() },
+    { headers },
   );
 
   if (res.status === 429) return [];
@@ -103,9 +105,9 @@ export async function getTodaysMatches(): Promise<Match[]> {
 }
 
 export async function getMatchDetail(id: string): Promise<Match> {
-  const res = await fetch(`${BASE_URL}/matches/${id}`, {
-    headers: authHeaders(),
-  });
+  const headers = authHeaders();
+  if (!headers) throw new Error("VITE_FOOTBALL_API_KEY is not configured");
+  const res = await fetch(`${BASE_URL}/matches/${id}`, { headers });
 
   if (res.status === 429) {
     throw new Error("Rate limited — try again shortly");
@@ -123,9 +125,11 @@ export async function getMatchDetail(id: string): Promise<Match> {
 export async function getStandings(
   competitionCode = "PL",
 ): Promise<Standing[]> {
+  const headers = authHeaders();
+  if (!headers) return [];
   const res = await fetch(
     `${BASE_URL}/competitions/${competitionCode}/standings`,
-    { headers: authHeaders() },
+    { headers },
   );
 
   if (res.status === 429) return [];
@@ -159,29 +163,33 @@ export async function getStandings(
   });
 }
 
+// Uses TheSportsDB free search — no API key required, covers football teams globally
 export async function searchTeams(
   query: string,
 ): Promise<Array<{ id: string; name: string; crest?: string }>> {
   const res = await fetch(
-    `${BASE_URL}/teams?name=${encodeURIComponent(query)}`,
-    { headers: authHeaders() },
+    `https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(query)}`,
   );
 
-  if (res.status === 429) return [];
+  if (!res.ok) return [];
 
-  if (!res.ok) {
-    throw new Error(`Failed to search teams: ${res.statusText}`);
-  }
-
-  // TODO: Verify top-level key — may be 'teams'
   const json = (await res.json()) as Record<string, unknown>;
   const teams = Array.isArray(json["teams"])
     ? (json["teams"] as Record<string, unknown>[])
     : [];
 
-  return teams.map((t) => ({
-    id: String(t["id"]),
-    name: String(t["name"]),
-    crest: typeof t["crest"] === "string" ? t["crest"] : undefined,
-  }));
+  // Filter to soccer/football teams only
+  return teams
+    .filter((t) => {
+      const sport = String(t["strSport"] ?? "").toLowerCase();
+      return sport === "soccer";
+    })
+    .map((t) => ({
+      id: String(t["idTeam"]),
+      name: String(t["strTeam"]),
+      crest:
+        typeof t["strBadge"] === "string" && t["strBadge"]
+          ? String(t["strBadge"])
+          : undefined,
+    }));
 }
