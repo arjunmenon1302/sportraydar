@@ -142,7 +142,7 @@ export function SportTab({ sport }: SportTabProps) {
       : [];
 
   return (
-    <div className="space-y-8 p-4">
+    <div className="rise-in space-y-8 p-4">
       {/* Your Matches */}
       {yourMatches.length > 0 && (
         <section className="space-y-3">

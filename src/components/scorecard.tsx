@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Card, CardContent } from "#/components/ui/card";
 import { Badge } from "#/components/ui/badge";
 import type { Match } from "#/api/types";
@@ -170,59 +171,62 @@ export function Scorecard({ match, followedTeamIds, onClick }: ScorecardProps) {
     followedTeamIds.includes(match.awayTeam.id);
 
   return (
-    <Card
-      className={cn(
-        "cursor-pointer border transition-colors hover:bg-[#1a1a1a]",
-        isFollowed ? "border-[var(--sport-accent)]" : "border-[var(--border)]",
-      )}
-      style={{ backgroundColor: "var(--card)" }}
+    <Link
+      to="/dashboard/match/$sport/$id"
+      params={{ sport: match.sport, id: match.id }}
       onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") onClick?.();
-      }}
+      className="block"
     >
-      {/* Competition + time header */}
-      <div
-        className="flex items-center justify-between border-b px-4 py-1.5"
-        style={{ borderColor: "var(--border)" }}
+      <Card
+        className={cn(
+          "cursor-pointer border transition-colors hover:bg-[#1a1a1a]",
+          isFollowed
+            ? "border-[var(--sport-accent)]"
+            : "border-[var(--border)]",
+        )}
+        style={{ backgroundColor: "var(--card)" }}
       >
-        <span className="truncate text-xs text-[var(--muted-foreground)]">
-          {match.competition}
-        </span>
-        <StatusBadge status={match.status} startTime={match.startTime} />
-      </div>
-
-      <CardContent className="px-4 py-3">
-        {/* Home team row */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">
-            <TeamCrest
-              name={match.homeTeam.name}
-              crest={match.homeTeam.crest}
-            />
-            <span className="truncate text-sm font-medium">
-              {match.homeTeam.name}
-            </span>
-          </div>
-          <ScoreCell score={match.homeTeam.score} />
+        {/* Competition + time header */}
+        <div
+          className="flex items-center justify-between border-b px-4 py-1.5"
+          style={{ borderColor: "var(--border)" }}
+        >
+          <span className="truncate text-xs text-[var(--muted-foreground)]">
+            {match.competition}
+          </span>
+          <StatusBadge status={match.status} startTime={match.startTime} />
         </div>
 
-        {/* Away team row */}
-        <div className="mt-2 flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">
-            <TeamCrest
-              name={match.awayTeam.name}
-              crest={match.awayTeam.crest}
-            />
-            <span className="truncate text-sm font-medium">
-              {match.awayTeam.name}
-            </span>
+        <CardContent className="px-4 py-3">
+          {/* Home team row */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <TeamCrest
+                name={match.homeTeam.name}
+                crest={match.homeTeam.crest}
+              />
+              <span className="truncate text-sm font-medium">
+                {match.homeTeam.name}
+              </span>
+            </div>
+            <ScoreCell score={match.homeTeam.score} />
           </div>
-          <ScoreCell score={match.awayTeam.score} />
-        </div>
-      </CardContent>
-    </Card>
+
+          {/* Away team row */}
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <TeamCrest
+                name={match.awayTeam.name}
+                crest={match.awayTeam.crest}
+              />
+              <span className="truncate text-sm font-medium">
+                {match.awayTeam.name}
+              </span>
+            </div>
+            <ScoreCell score={match.awayTeam.score} />
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }

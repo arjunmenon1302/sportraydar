@@ -8,5 +8,5 @@ export const Route = createFileRoute("/dashboard/")({
 
 function DashboardIndex() {
   const { activeSport } = useSportContext();
-  return <SportTab sport={activeSport} />;
+  return <SportTab key={activeSport} sport={activeSport} />;
 }
